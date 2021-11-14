@@ -1,0 +1,77 @@
+version: "3.3"
+services:
+  message_queue:
+    container_name: message_queue
+    image: redis
+    expose: 
+      - 6379
+  api_gateway:
+    container_name: api_gateway
+    build: ./api_gateway
+    volumes:
+      - ./api_gateway:/app
+    ports:
+      - 15000:15000
+    depends_on:
+      - user_db
+  user_db:
+    container_name: user_db
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: comp3122
+      MONGO_INITDB_ROOT_PASSWORD: 23456
+      MONGO_INITDB_DATABASE: admin
+    expose:
+      - 27017
+    volumes:
+      - ./api_gateway/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
+      - user_db:/data/db
+  menu:
+    container_name: menu
+    build: ./menu
+    volumes:
+      - ./menu:/app
+    expose:
+      - 15000
+    depends_on:
+      - menu_db
+  menu_db:
+    container_name: menu_db
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: comp3122
+      MONGO_INITDB_ROOT_PASSWORD: 23456
+      MONGO_INITDB_DATABASE: admin
+    expose:
+      - 27017
+    volumes:
+      - ./menu/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
+      - menu_db:/data/db
+  restaurant_order:
+    container_name: resutaurant_order
+    build: ./restaurant_order
+    volumes:
+      - ./restaurant_order:/app
+    expose:
+      - 15000
+    depends_on:
+      - restaurant_order_db
+  resutaurant_order_db:
+    container_name: restaurant_order_db
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: comp3122
+      MONGO_INITDB_ROOT_PASSWORD: 23456
+      MONGO_INITDB_DATABASE: admin
+    expose:
+      - 27017
+    volumes:
+      - ./menu/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
+      - restaurant_order_db:/data/db
+volumes:
+  user_db:
+    name: user_db
+  menu_db:
+    name: menu_db
+  restaurant_order_db:
+    name: restaurant_order_db
