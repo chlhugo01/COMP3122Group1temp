@@ -1,11 +1,13 @@
 import json
 import redis
 import requests
+from datetime import datetime
+
 
 redis_conn = redis.Redis(host='message_queue', port=6379)
 
-# Requests
-
+now = datetime.now()
+print(now)
 
 def request_restaurant():
     response = requests.get('http://restaurant_order:15000/restaurant/1')

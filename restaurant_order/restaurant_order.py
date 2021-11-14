@@ -27,7 +27,7 @@ def new_order(message):
     orderresult["order"].append({'order_id':order_id, 'customer_id': user_id,'food_id':food_id,'prepare':0,'deliver':0})
     mongo_client.restaurant_orders.Order.replace_one( query, orderresult )
     #orderresult = mongo_client.restaurant_orders.Order.find()
-    
+
 def set_prepared(message):
     load = json.loads(message['data'])
     order_id = load['order_id']
@@ -50,7 +50,15 @@ def set_shipped(message):
             break
     mongo_client.restaurant_orders.Order.replace_one({'_id': orders['_id']}, orders)
 
-    
+def delete(message):
+    load = json.loads(message['data'])
+    order_id = load['order_id']
+    orders = mongo_client.restaurant_orders.Order.find_one({'order.order_id': order_id})
+    for order in orders["order"]:
+        if order['order_id'] == order_id:
+            order['deliver'] = delivery_id
+            break
+    mongo_client.restaurant_orders.Order.replace_one({'_id': orders['_id']}, orders)
 
 
 ###################
@@ -67,6 +75,8 @@ def get_a_restaurant(restaurant_id):
 def get_order(order_id):
     orders = mongo_client.restaurant_orders.Order \
         .find_one({'order.order_id': order_id}, { '_id': 0})
+    if not orders:
+         return {'error': 'not found'}, 404
     restaurant_id = orders['restaurant_id']
     orders = orders['order']
     for order in orders:
@@ -74,7 +84,6 @@ def get_order(order_id):
             o = order
             o['restaurant_id'] = restaurant_id
             return o, 200
-    return {'error': 'not found'}, 404
 """ 
 @flask_app.route('/', methods=['POST'])
 def post_a_order():
