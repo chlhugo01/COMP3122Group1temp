@@ -15,14 +15,44 @@ redis_conn = redis.Redis(host='message_queue', port=6379)
 # Redis events
 ################
 
+
 def new_order(message):
     load = json.loads(message['data'])
     order_id = load['order_id']
     restaurant_id = load['restaurant_id']
     food_id = load['food_id']
     user_id = load['user_id']
-    print(order_id,restaurant_id,food_id,user_id,flush=True)
-    ### new order
+    orderresult = mongo_client.restaurant_orders.Order.find_one({"restaurant_id": int(restaurant_id)})
+    query = {"_id" : orderresult["_id"] }
+    orderresult["order"].append({'order_id':order_id, 'customer_id': user_id,'food_id':food_id,'perpare':0,'deliver':0})
+    mongo_client.restaurant_orders.Order.replace_one( query, orderresult )
+    #orderresult = mongo_client.restaurant_orders.Order.find()
+
+    
+def set_prepared(message):
+    load = json.loads(message['data'])
+    order_id = load['order_id']
+    prepared = load['prepared']
+    orderresult = mongo_client.restaurant_orders.Order.find()
+    query = {"_id" : orderresult["_id"] }
+    for i in orderresult["order"]:
+        if i["order_id"]==order_id:
+            i["order_id"]["perpare"]=1
+    mongo_client.restaurant_orders.Order.replace_one( query, orderresult )
+    #orderresult = mongo_client.restaurant_orders.Order.find()
+    #print(orderresult, flush=True)
+
+
+def set_shipped(message):
+    load = json.loads(message['data'])
+    order_id = load['order_id']
+    delivery_id = load['delivery_id']
+    orderresult = mongo_client.restaurant_orders.Order.find()
+    query = {"_id" : orderresult["_id"] }
+    for i in orderresult["order"]:
+        if i["order_id"]==order_id:
+            i["order_id"]["deliver"]=delivery_id
+    mongo_client.restaurant_orders.Order.replace_one( query, orderresult )
 
     
 
