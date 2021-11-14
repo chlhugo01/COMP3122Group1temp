@@ -11,6 +11,11 @@ def test_get_order():
         'order_id':'r1o1', 'restaurant_id':1, 'food_id':1, 'taken':1
     }
 
+def test_get_null():
+    response = requests.get('http://customer_order:15000/r1o5')
+    assert response.status_code == 404
+    assert response.json() == {'error': 'not found'}
+
 def test_set_taken():
     data = json.dumps({'order_id': 'r2o3', 'taken': 1})
     redis_conn.publish('customerOrder_setTaken', data)
@@ -28,4 +33,6 @@ def test_new_order():
     assert response.json() == {
         'order_id':'r1o4', 'restaurant_id':1, 'food_id':1, 'taken':0
     }
+
+
     
