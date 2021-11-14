@@ -1,3 +1,4 @@
+import datetime
 import flask
 import hashlib
 import json
@@ -18,8 +19,8 @@ redis_conn = redis.Redis(host='message_queue', port=6379)
 # Define functions 
 ####################
 
-def hash(password):
-    return hashlib.md5(password.encode()).hexdigest()
+def hash(text):
+    return hashlib.md5(text.encode()).hexdigest()
 
 def generate_token(user_info):
     return jwt.encode(user_info, "secretPassword", algorithm="HS256")
@@ -131,11 +132,19 @@ def post_order():
     if response.status_code == 404:
         return flask.jsonify(response.json()), response.status_code
     
+    order_id = hash(str(user['id'])+str(datetime.datetime.now().timestamp))
+
+    load = json.dumps({
+        'order_id': order_id,
+        'user_id': user['id'],
+        'restaurant_id': restaurant_id,
+        'food_id': food_id
+    })
+
     # Add order to restaurant
-    redis_conn.publish('restaurantOrder_newOrder', 'test')
+    redis_conn.publish('restaurantOrder_newOrder', load)
+    redis_conn.publish('customerOrder_newOrder', load)
     return '200'
-    ##response = requests.post('http://restaurant_order:15000?restaurant_id='+restaurant_id+'&food_id='+food_id+'&customer_id='+str(user['id']))
-    ##return flask.jsonify(response.json()), response.status_code
 
 
         

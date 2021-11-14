@@ -1,5 +1,6 @@
 import datetime
 import flask
+import json
 import pymongo
 import redis
 
@@ -15,9 +16,13 @@ redis_conn = redis.Redis(host='message_queue', port=6379)
 ################
 
 def new_order(message):
-    db = mongo_client.restaurant_orders.restaurants
-    rows = db.collection.find({})
+    load = json.loads(message['data'])
+    order_id = load['order_id']
+    restaurant_id = load['restaurant_id']
+    food_id = load['food_id']
+    user_id = load['user_id']
     ### new order
+
     
 
 
@@ -30,7 +35,7 @@ def get_a_restaurant(restaurant_id):
     db = mongo_client.restaurant_orders.restaurants
     result = list(db.find({'id': int(restaurant_id)}, {'_id': 0}))
     return flask.jsonify(result)
-
+""" 
 @flask_app.route('/', methods=['POST'])
 def post_a_order():
     db = mongo_client.restaurant_orders.restaurants
@@ -50,7 +55,7 @@ def post_a_order():
     })
     id = 'R'+str(restaurant_id)+'O'+str(id)
     return flask.jsonify(rows), 200
-    return {'order_id': id}, 202
+    return {'order_id': id}, 202 """
 
 
 
