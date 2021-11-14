@@ -1,13 +1,13 @@
 import json
 import redis
 import requests
+import random
 from datetime import datetime
 
 
 redis_conn = redis.Redis(host='message_queue', port=6379)
-
-now = datetime.now()
-print(now)
+r_id = random.randint(1111,9999)
+r_id_str = str(r_id)
 
 def request_restaurant():
     response = requests.get('http://restaurant_order:15000/restaurant/1')
@@ -42,47 +42,47 @@ def request_order():
 
 def test_new_order():
     data = json.dumps({
-        'order_id': 'jjjj',
+        'order_id': r_id_str,
         'user_id': 1,
         'restaurant_id': 1,
         'food_id': 1
     })
     redis_conn.publish('restaurantOrder_newOrder', data)
-    response = requests.get('http://restaurant_order:15000/order/jjjj')
+    response = requests.get('http://restaurant_order:15000/order/'+ r_id_str)
     assert response.status_code == 200
     assert response.json() == {
         "customer_id": 1,
         "deliver": 0,
         "food_id": 1,
-        "order_id": "jjjj",
+        "order_id": r_id_str,
         "prepare": 0,
         "restaurant_id": 1
     }
 
 def test_set_prepared():
-    data = json.dumps({'order_id': "jjjj", 'prepared': 0})
+    data = json.dumps({'order_id': r_id_str, 'prepared': 0})
     redis_conn.publish('restaurantOrder_setPrepared', data)
-    response = requests.get('http://restaurant_order:15000/order/jjjj')
+    response = requests.get('http://restaurant_order:15000/order/'+ r_id_str)
     assert response.status_code == 200
     assert response.json() == {
         "customer_id": 1,
         "deliver": 0,
         "food_id": 1,
-        "order_id": "jjjj",
+        "order_id": r_id_str,
         "prepare": 1,
         "restaurant_id": 1
     }
 
 def test_set_shipped():
-    data = json.dumps({'order_id': "jjjj", 'delivery_id': 3})
+    data = json.dumps({'order_id': r_id_str, 'delivery_id': 3})
     redis_conn.publish('restaurantOrder_setShipped', data)
-    response = requests.get('http://restaurant_order:15000/order/jjjj')
+    response = requests.get('http://restaurant_order:15000/order/'+r_id_str)
     assert response.status_code == 200
     assert response.json() == {
         "customer_id": 1,
         "deliver": 3,
         "food_id": 1,
-        "order_id": "jjjj",
+        "order_id": r_id_str,
         "prepare": 1,
         "restaurant_id": 1
     }
