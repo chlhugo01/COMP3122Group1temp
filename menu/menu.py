@@ -38,7 +38,7 @@ def get_a_food(restaurant_id, food_id):
         return {'error': 'food not found'}, 404
     return result[0], 200
 
-@flask_app.route('/restaurant_id', methods=['POST'])
+@flask_app.route('/<restaurant_id>', methods=['POST'])
 def add_food(restaurant_id):
     food_name = flask.request.args.get('food_name')
     food_price = flask.request.args.get('food_price')
