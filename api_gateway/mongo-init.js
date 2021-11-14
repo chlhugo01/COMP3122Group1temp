@@ -17,4 +17,4 @@ db.delivery.insertOne({'id':2, 'username':'daisy','password':'04354ec5a573cdfbcc
 db.delivery.insertOne({'id':3, 'username':'dylan','password':'709488e90b981b35e9a634b6ab414277', 'phone_number': 98657731});
 
 db.createCollection('admin');
-db.admin.insertOne({'admin_id':1, 'username':'amelia','password':'e7c6e3e97e97a71ccfa54eea208a5359'});
+db.admin.insertOne({'id':1, 'username':'amelia','password':'e7c6e3e97e97a71ccfa54eea208a5359'});
