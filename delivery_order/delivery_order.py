@@ -22,18 +22,14 @@ def set_taken(message):
     for order in orders["orders"]:
         if order['order_id'] == order_id:
             order["taken"] = taken
-            break;
+            break
     deliveries_coll.replace_one({'_id': orders['_id']}, orders)
 
 def add_shipped(message):
     load = json.loads(message['data'])
     delivery = deliveries_coll.find_one({'delivery_id': load['delivery_id']})
-    print("\n\n\n\n\n",delivery,"\n\n\n\n\n",flush=True) # before
     delivery['orders'].append({'order_id': load['order_id'], 'customer_id': load['customer_id'], 'restaurant_id': load['restaurant_id'], 'taken': 0})
     deliveries_coll.replace_one({'_id': delivery['_id']}, delivery)
-
-    delivery = deliveries_coll.find_one({'delivery_id': load['delivery_id']}) # after
-    print("\n\n\n\n\n",delivery,"\n\n\n\n\n",flush=True)
 
 ###################
 # Flask endpoints
