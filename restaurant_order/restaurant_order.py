@@ -22,46 +22,37 @@ def new_order(message):
     restaurant_id = load['restaurant_id']
     food_id = load['food_id']
     user_id = load['user_id']
-    print(order_id,restaurant_id,food_id,user_id,flush=True)
-    ### new order
-    print(order_id, flush=True)
     orderresult = mongo_client.restaurant_orders.Order.find_one({"restaurant_id": int(restaurant_id)})
     query = {"_id" : orderresult["_id"] }
-    #ar = len(orderresult["order"])+1
-    #order_string= 'r'+str(restaurant_id)+'o'+ str(ar)
     orderresult["order"].append({'order_id':order_id, 'customer_id': user_id,'food_id':food_id,'perpare':0,'deliver':0})
     mongo_client.restaurant_orders.Order.replace_one( query, orderresult )
-    orderresult = mongo_client.restaurant_orders.Order.find()
-    print(orderresult, flush=True)
+    #orderresult = mongo_client.restaurant_orders.Order.find()
 
     
-def make_order(message):
+def set_prepared(message):
     load = json.loads(message['data'])
     order_id = load['order_id']
-    restaurant_id = load['restaurant_id']
-    orderresult = mongo_client.restaurant_orders.Order.find_one({"restaurant_id": int(restaurant_id)})
+    prepared = load['prepared']
+    orderresult = mongo_client.restaurant_orders.Order.find()
     query = {"_id" : orderresult["_id"] }
     for i in orderresult["order"]:
         if i["order_id"]==order_id:
-            i["order_id"]["deliver"]=1
+            i["order_id"]["perpare"]=1
     mongo_client.restaurant_orders.Order.replace_one( query, orderresult )
     #orderresult = mongo_client.restaurant_orders.Order.find()
     #print(orderresult, flush=True)
 
-def set_prepared(message):
-    a=1
 
 def set_shipped(message):
     load = json.loads(message['data'])
     order_id = load['order_id']
     delivery_id = load['delivery_id']
     orderresult = mongo_client.restaurant_orders.Order.find()
-    print(orderresult, flush=True)
-    #query = {"_id" : orderresult["_id"] }
-    #for i in orderresult["order"]:
-    #    if i["order_id"]==order_id:
-    #        i["order_id"]["deliver"]=1
-    #mongo_client.restaurant_orders.Order.replace_one( query, orderresult )
+    query = {"_id" : orderresult["_id"] }
+    for i in orderresult["order"]:
+        if i["order_id"]==order_id:
+            i["order_id"]["deliver"]=delivery_id
+    mongo_client.restaurant_orders.Order.replace_one( query, orderresult )
 
     
 
