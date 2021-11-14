@@ -10,6 +10,7 @@ db.deliveries.insertOne({
         {'order_id':'r2o2','customer_id':2,'restaurant_id':2,'taken':1}
     ]
 })
+
 db.deliveries.insertOne({
     'delivery_id':2,
     'name': 'daisy',
@@ -18,6 +19,7 @@ db.deliveries.insertOne({
         {'order_id':'r3o2', 'customer_id':3,'restaurant_id':3,'taken':1}
     ]
 })
+
 db.deliveries.insertOne({
     'delivery_id':3,
     'name': 'dylan',
