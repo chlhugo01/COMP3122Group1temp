@@ -24,35 +24,31 @@ def new_order(message):
     user_id = load['user_id']
     orderresult = mongo_client.restaurant_orders.Order.find_one({"restaurant_id": int(restaurant_id)})
     query = {"_id" : orderresult["_id"] }
-    orderresult["order"].append({'order_id':order_id, 'customer_id': user_id,'food_id':food_id,'perpare':0,'deliver':0})
+    orderresult["order"].append({'order_id':order_id, 'customer_id': user_id,'food_id':food_id,'prepare':0,'deliver':0})
     mongo_client.restaurant_orders.Order.replace_one( query, orderresult )
     #orderresult = mongo_client.restaurant_orders.Order.find()
-
     
 def set_prepared(message):
     load = json.loads(message['data'])
     order_id = load['order_id']
-    prepared = load['prepared']
-    orderresult = mongo_client.restaurant_orders.Order.find()
-    query = {"_id" : orderresult["_id"] }
-    for i in orderresult["order"]:
-        if i["order_id"]==order_id:
-            i["order_id"]["perpare"]=1
-    mongo_client.restaurant_orders.Order.replace_one( query, orderresult )
-    #orderresult = mongo_client.restaurant_orders.Order.find()
-    #print(orderresult, flush=True)
-
+    prepare = load['prepared']
+    orders = mongo_client.restaurant_orders.Order.find_one({'order.order_id': order_id})
+    for order in orders["order"]:
+        if order['order_id'] == order_id:
+            order["prepare"] = 1
+            break
+    mongo_client.restaurant_orders.Order.replace_one({'_id': orders['_id']}, orders)
 
 def set_shipped(message):
     load = json.loads(message['data'])
     order_id = load['order_id']
     delivery_id = load['delivery_id']
-    orderresult = mongo_client.restaurant_orders.Order.find()
-    query = {"_id" : orderresult["_id"] }
-    for i in orderresult["order"]:
-        if i["order_id"]==order_id:
-            i["order_id"]["deliver"]=delivery_id
-    mongo_client.restaurant_orders.Order.replace_one( query, orderresult )
+    orders = mongo_client.restaurant_orders.Order.find_one({'order.order_id': order_id})
+    for order in orders["order"]:
+        if order['order_id'] == order_id:
+            order['deliver'] = delivery_id
+            break
+    mongo_client.restaurant_orders.Order.replace_one({'_id': orders['_id']}, orders)
 
     
 
@@ -61,11 +57,24 @@ def set_shipped(message):
 # Flask endpoints
 ###################
 
-@flask_app.route('/<restaurant_id>', methods=['GET'])
+@flask_app.route('/restaurant/<restaurant_id>', methods=['GET'])
 def get_a_restaurant(restaurant_id):
-    db = mongo_client.restaurant_orders.restaurants
-    result = list(db.find({'id': int(restaurant_id)}, {'_id': 0}))
+    db = mongo_client.restaurant_orders.Order
+    result = list(db.find({'restaurant_id': int(restaurant_id)}, {'_id': 0}))
     return flask.jsonify(result)
+
+@flask_app.route('/order/<order_id>', methods=['GET'])
+def get_order(order_id):
+    orders = mongo_client.restaurant_orders.Order \
+        .find_one({'order.order_id': order_id}, { '_id': 0})
+    restaurant_id = orders['restaurant_id']
+    orders = orders['order']
+    for order in orders:
+        if order['order_id'] == order_id:
+            o = order
+            o['restaurant_id'] = restaurant_id
+            return o, 200
+    return {'error': 'not found'}, 404
 """ 
 @flask_app.route('/', methods=['POST'])
 def post_a_order():
@@ -97,6 +106,8 @@ def post_a_order():
 if __name__ == '__main__':
     redis_pubsub = redis_conn.pubsub()
     redis_pubsub.subscribe(**{'restaurantOrder_newOrder': new_order})
+    redis_pubsub.subscribe(**{'restaurantOrder_setPrepared': set_prepared})
+    redis_pubsub.subscribe(**{'restaurantOrder_setShipped': set_shipped})
     redis_pubsub_thread = redis_pubsub.run_in_thread(sleep_time=0.001)
     flask_app.run(host='0.0.0.0', debug=True, port=15000)
 
