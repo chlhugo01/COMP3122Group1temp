@@ -1,13 +1,13 @@
 import flask
 import pymongo
-import redis
+#import redis
 
 ##############################
 # Init library / connections
 #######3######################
 flask_app = flask.Flask(__name__)
 mongo_client = pymongo.MongoClient('mongodb://comp3122:23456@menu_db:27017')
-redis_conn = redis.Redis(host='localhost', port=6379)
+#redis_conn = redis.Redis(host='message_queue', port=6379)
 
 
 ##################

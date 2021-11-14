@@ -12,7 +12,7 @@ import requests
 #######3######################
 flask_app = flask.Flask(__name__)
 mongo_client = pymongo.MongoClient('mongodb://comp3122:23456@user_db:27017')
-redis_conn = redis.Redis(host='localhost', port=6379)
+redis_conn = redis.Redis(host='message_queue', port=6379)
 
 ####################
 # Define functions 
@@ -132,8 +132,10 @@ def post_order():
         return flask.jsonify(response.json()), response.status_code
     
     # Add order to restaurant
-    response = requests.post('http://restaurant_order:15000?restaurant_id='+restaurant_id+'&food_id='+food_id+'&customer_id='+str(user['id']))
-    return flask.jsonify(response.json()), response.status_code
+    redis_conn.publish('restaurantOrder_newOrder', 'test')
+    return '200'
+    ##response = requests.post('http://restaurant_order:15000?restaurant_id='+restaurant_id+'&food_id='+food_id+'&customer_id='+str(user['id']))
+    ##return flask.jsonify(response.json()), response.status_code
 
 
         
