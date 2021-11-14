@@ -21,6 +21,7 @@ def new_order(message):
     restaurant_id = load['restaurant_id']
     food_id = load['food_id']
     user_id = load['user_id']
+    print(order_id,restaurant_id,food_id,user_id,flush=True)
     ### new order
 
     

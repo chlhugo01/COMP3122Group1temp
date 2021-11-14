@@ -1,3 +1,5 @@
 flask
+pyjwt
 pymongo
 redis
+requests
