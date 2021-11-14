@@ -1,0 +1,41 @@
+version: "3.3"
+services:
+  message_queue:
+     container_name: message_queue
+     image: redis
+     expose: 
+       - 6379
+  delivery_order:
+      container_name: delivery_order
+      build: .
+      volumes:
+        - .:/app
+      ports:
+        - 15000:15000
+      depends_on:
+        - delivery_order_db
+
+  delivery_order_db:
+    container_name: delivery_order_db
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: comp3122
+      MONGO_INITDB_ROOT_PASSWORD: 23456
+      MONGO_INITDB_DATABASE: admin
+    ports:
+      - 27017:27017
+    volumes:
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
+      - delivery_order_db:/data/db
+  delivery_order_test:
+    container_name: delivery_order_test
+    build: ./test
+    depends_on:
+      - delivery_order
+      - delivery_order_db
+    volumes:
+      - ./test:/app
+
+volumes:
+  delivery_order_db:
+    name: delivery_order_db
