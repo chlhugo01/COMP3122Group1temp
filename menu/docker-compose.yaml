@@ -1,0 +1,43 @@
+version: "3.3"
+services:
+  message_queue:
+     container_name: message_queue
+     image: redis
+     expose: 
+       - 6379
+
+  menu:
+    container_name: menu
+    build: .
+    volumes:
+      - .:/app
+    ports:
+        - 15000:15000
+    depends_on:
+      - menu_db
+
+  menu_db:
+    container_name: menu_db
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: comp3122
+      MONGO_INITDB_ROOT_PASSWORD: 23456
+      MONGO_INITDB_DATABASE: admin
+    ports:
+      - 27017:27017
+    volumes:
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
+      - menu_db:/data/db
+
+  menu_test:
+    container_name: menu_test
+    build: ./test
+    depends_on:
+      - menu
+      - menu_db
+    volumes:
+      - ./test:/app
+
+volumes:
+  menu_db:
+    name: menu_db
