@@ -39,10 +39,12 @@ def add_shipped(message):
 def get_order(order_id):
     orders = deliveries_coll \
         .find_one({'orders.order_id': order_id}, { '_id': 0})['orders']
+    if not orders:
+        return {'error': 'not found'}, 404
     for order in orders:
         if order['order_id'] == order_id:
             return order, 200
-    return {'error': 'not found'}, 404
+    
 
 ##############################
 # Main: Run flask, establish subscription
