@@ -16,11 +16,11 @@ def request_restaurant():
         'name': 'Hong Kong Happy Dim Sum',
         'order': [
             {'order_id': 'r1o1', 'customer_id': 1,
-                'food_id': 1, 'perpare': 1, 'deliver': 1},
+                'food_id': 1, 'prepare': 1, 'deliver': 1},
             {'order_id': 'r1o2', 'customer_id': 3,
-                'food_id': 1, 'perpare': 1, 'deliver': 3},
+                'food_id': 1, 'prepare': 1, 'deliver': 3},
             {'order_id': 'r1o3', 'customer_id': 2,
-                'food_id': 2, 'perpare': 0, 'deliver': 0}
+                'food_id': 2, 'prepare': 0, 'deliver': 0}
         ]
     }]
 
@@ -34,7 +34,7 @@ def request_order():
         "deliver": 1,
         "food_id": 1,
         "order_id": "r1o1",
-        "perpare": 1,
+        "prepare": 1,
         "restaurant_id": 1
     }
 
@@ -53,7 +53,7 @@ def test_new_order():
         "deliver": 0,
         "food_id": 1,
         "order_id": "jjjj",
-        "perpare": 0,
+        "prepare": 0,
         "restaurant_id": 1
     }
 
@@ -67,7 +67,7 @@ def test_set_prepared():
         "deliver": 0,
         "food_id": 1,
         "order_id": "jjjj",
-        "perpare": 1,
+        "prepare": 1,
         "restaurant_id": 1
     }
 
@@ -81,6 +81,6 @@ def test_set_shipped():
         "deliver": 3,
         "food_id": 1,
         "order_id": "jjjj",
-        "perpare": 1,
+        "prepare": 1,
         "restaurant_id": 1
     }

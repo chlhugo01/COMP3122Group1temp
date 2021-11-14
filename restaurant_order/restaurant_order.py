@@ -24,10 +24,9 @@ def new_order(message):
     user_id = load['user_id']
     orderresult = mongo_client.restaurant_orders.Order.find_one({"restaurant_id": int(restaurant_id)})
     query = {"_id" : orderresult["_id"] }
-    orderresult["order"].append({'order_id':order_id, 'customer_id': user_id,'food_id':food_id,'perpare':0,'deliver':0})
+    orderresult["order"].append({'order_id':order_id, 'customer_id': user_id,'food_id':food_id,'prepare':0,'deliver':0})
     mongo_client.restaurant_orders.Order.replace_one( query, orderresult )
     #orderresult = mongo_client.restaurant_orders.Order.find()
-
     
 def set_prepared(message):
     load = json.loads(message['data'])
@@ -36,7 +35,7 @@ def set_prepared(message):
     orders = mongo_client.restaurant_orders.Order.find_one({'order.order_id': order_id})
     for order in orders["order"]:
         if order['order_id'] == order_id:
-            order["perpare"] = 1
+            order["prepare"] = 1
             break
     mongo_client.restaurant_orders.Order.replace_one({'_id': orders['_id']}, orders)
 
