@@ -38,9 +38,10 @@ def add_shipped(message):
 @flask_app.route('/<order_id>', methods=['GET'])
 def get_order(order_id):
     orders = deliveries_coll \
-        .find_one({'orders.order_id': order_id}, { '_id': 0})['orders']
+        .find_one({'orders.order_id': order_id}, { '_id': 0})
     if not orders:
         return {'error': 'not found'}, 404
+    orders = orders['orders']
     for order in orders:
         if order['order_id'] == order_id:
             return order, 200
