@@ -40,15 +40,20 @@ def get_a_food(restaurant_id, food_id):
 
 @flask_app.route('/<restaurant_id>', methods=['POST'])
 def add_food(restaurant_id):
+    lastid = 0
     food_name = flask.request.args.get('food_name')
     food_price = flask.request.args.get('food_price')
     #new food
     foodresult = col.find_one({"id": int(restaurant_id)})
-    query = {"_id" : foodresult["_id"] }
-    lastid = col.find_one({"id": restaurant_id},{"_id":0,"food.id":1},sort=[("food.id",-1)])['food.id']
+    print(foodresult,flush=True)
+    query = {"id" : int(restaurant_id) }
+    result = list(col.find({'id': int(restaurant_id)}, {'_id': 0}))[0]['food']
+    for food in result:
+        if food['id']>lastid:
+            lastid = food['id']
     foodresult["food"].append({'id':lastid+1, 'name':food_name, 'price':int(food_price)})
     col.replace_one( query, foodresult )
-    return {'food_id': lastid+1}, 201 
+    return {'food_id': lastid+1}, 201
 
 def delete_food(message):
     load = json.loads(message['data'])

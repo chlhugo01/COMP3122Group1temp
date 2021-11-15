@@ -1,4 +1,5 @@
 import json
+from types import new_class
 import redis
 import requests
 
@@ -41,8 +42,8 @@ def test_get_a_food():
     assert response.json() == {'id': 1, 'name': 'Siu mai', 'price': 4}
 
 def test_add_food():
-    load = json.dumps({'restaurant_id': 1, 'food_name':'bread','food_price': 10})
-    redis_conn.publish('menu_addFood', load)
+    food = {"food_name":"bread","food_price":10}
+    response = requests.post('http://menu:15000/1?food_name=bread&food_price=10')
     response = requests.get('http://menu:15000/1/4')
     assert response.status_code == 200
     assert response.json() == {'id': 4, 'name': 'bread', 'price': 10}
