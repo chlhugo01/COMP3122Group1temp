@@ -112,12 +112,36 @@ services:
     volumes:
       - ./delivery_order/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
       - delivery_order_db:/data/db
-  delivery_order_test:
-    container_name: delivery_order_test
-    build: ./delivery_order/test
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/alert_rules.yaml:/etc/prometheus/alert_rules.yaml
+
+  grafana:
+    image: grafana/grafana
+    volumes:
+      - "./grafana/grafana.ini:/etc/grafana/grafana.ini"
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+      - ./grafana:/var/lib/grafana
+    ports:
+      - 3000:3000
     depends_on:
-      - delivery_order
-      - delivery_order_db
+      -  prometheus
+
+  alertmanager:
+     image: prom/alertmanager
+     ports:
+       - 9093:9093
+     volumes:
+       - ./prometheus/alertmanager.yaml/:/etc/alertmanager/alertmanager.yaml
+     restart: always
+     command:
+       - '--config.file=/etc/alertmanager/alertmanager.yaml'
+       - '--storage.path=/alertmanager'
 
 volumes:
   user_db:

@@ -3,3 +3,5 @@ pyjwt
 pymongo
 redis
 requests
+flask_prometheus_metrics
+prometheus_flask_exporter

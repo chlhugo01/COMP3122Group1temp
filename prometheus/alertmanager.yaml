@@ -1,0 +1,17 @@
+global:
+  resolve_timeout: 10s
+
+route:
+  group_by: ['alertname']
+  receiver: 'gmail-notifications'
+
+receivers:
+- name: 'gmail-notifications'
+  email_configs:
+  - to: chlhugo01@gmail.com
+    from: chlhugo01@gmail.com
+    smarthost: smtp.gmail.com:587
+    auth_username: chlhugo01@gmail.com
+    auth_identity: chlhugo01@gmail.com
+    auth_password: clch2811
+    send_resolved: true

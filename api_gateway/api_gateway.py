@@ -9,6 +9,7 @@ import jwt
 import pymongo
 import redis
 import requests
+from prometheus_flask_exporter import PrometheusMetrics
 
 
 ##############################
@@ -17,6 +18,8 @@ import requests
 flask_app = flask.Flask(__name__)
 mongo_client = pymongo.MongoClient('mongodb://comp3122:23456@user_db:27017')
 redis_conn = redis.Redis(host='message_queue', port=6379)
+metrics = PrometheusMetrics(flask_app)
+metrics.info('app_info', 'Application info', version='1.0.3')
 
 ####################
 # Define functions 
@@ -296,4 +299,4 @@ def put_order(order_id):
         
 
 if __name__ == '__main__':
-    flask_app.run(host='0.0.0.0', debug=True, port=15000)
+    flask_app.run(host='0.0.0.0',  port=15000)
