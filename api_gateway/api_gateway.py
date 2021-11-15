@@ -108,9 +108,12 @@ def add_a_food(restaurant_id):
     return {'food_id': response.json()['food_id']}, 201
 
 @flask_app.route('/menu/<restaurant_id>/<food_id>', methods=['DELETE'])
-def delete_a_food(restaruant_id, food_id):
+def delete_a_food(restaurant_id, food_id):
+    response = requests.get('http://menu:15000/'+restaurant_id+'/'+food_id)
+    if response.status_code == 404:
+        return flask.jsonify(response.json()), response.status_code
     load = json.dumps({
-        'restaruant_id': restaruant_id,
+        'restaurant_id': restaurant_id,
         'food_id': food_id
     })
     redis_conn.publish('menu_deleteFood', load)
@@ -271,9 +274,9 @@ def put_order(order_id):
         # For action arrived
         if arrived:
             # Check if order exists in restaurant
-            response = requests.get('http://delivery_order:15000/'+order_id)
-            if response.status_code == 404:
-                return {'error': 'order id not in delivery order'}, 404
+            #response = requests.get('http://delivery_order:15000/'+order_id)
+            #if response.status_code == 404:
+            #    return {'error': 'order id not in delivery order'}, 404
             arrived = bool_in_str_to_zero_one(arrived)
             print(arrived, order_id, flush=True)
             # Send event to delivery
