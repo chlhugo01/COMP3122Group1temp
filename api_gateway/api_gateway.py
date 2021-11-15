@@ -1,7 +1,10 @@
 import datetime
+import re
 import flask
 import hashlib
 import json
+
+from flask.globals import request
 import jwt
 import pymongo
 import redis
@@ -34,12 +37,12 @@ def authenticate_token(token):
         return None
     return decode
 
-def string_to_boolean(str):
+def bool_in_str_to_zero_one(str):
     str = str.lower()
     if str == 'true':
-        return True
+        return 1
     elif str == 'false':
-        return False
+        return 0
     return None
 
 ##########################
@@ -95,6 +98,24 @@ def get_a_food(restaurant_id, food_id):
     response = requests.get('http://menu:15000/'+restaurant_id+'/'+food_id)
     return flask.jsonify(response.json()), response.status_code
 
+@flask_app.route('/menu/<restaurant_id>', methods=['POST'])
+def add_a_food(restaurant_id):
+    food_name = flask.request.args.get('food_name')
+    food_price = flask.request.args.get('food_price')
+    if not food_name or not food_price:
+        return {'error': 'provide food_name and food_price in path'}, 400
+    response = requests.post('http://menu:15000/'+restaurant_id+'?food_name='+food_name+'&food_price='+food_price)
+    return {'food_id': response.json()['food_id']}, 201
+
+@flask_app.route('/menu/<restaurant_id>/<food_id>', methods=['DELETE'])
+def delete_a_food(restaruant_id, food_id):
+    load = json.dumps({
+        'restaruant_id': restaruant_id,
+        'food_id': food_id
+    })
+    redis_conn.publish('menu_deleteFood', load)
+    return '', 204
+
 ##########################
 # Flask endpoints: order 
 ##########################
@@ -103,7 +124,7 @@ def get_restaurant_order(restaurant_id):
     # Authentication token
     token = flask.request.args.get('token')
     if not token:
-        return {'error': 'token is required'}, 400
+        return {'error': 'token is required'}, 401
     user = authenticate_token(token)
     if not user:
         return {'error': 'invalid token'}, 403
@@ -122,14 +143,14 @@ def post_order():
     # Authenticate token
     token = flask.request.args.get('token')
     if not token:
-        return {'error': 'token is required'}, 400
+        return {'error': 'token is required'}, 401
     user = authenticate_token(token)
     if not user:
         return {'error': 'invalid token'}, 403
     if user['group'] != 'customer':
         return {'error': 'you do not have the permission to perform this request'}, 403
     
-    # Check if food exists
+    # Check if food existsd
     restaurant_id = flask.request.args.get('restaurant_id')
     if not restaurant_id:
         return {'error', 'restaurant_id is required'}, 400
@@ -148,18 +169,31 @@ def post_order():
         'restaurant_id': restaurant_id,
         'food_id': food_id
     })
+    print('####################\n'+load, flush=True)
 
     # Add order to restaurant
     redis_conn.publish('restaurantOrder_newOrder', load)
     redis_conn.publish('customerOrder_newOrder', load)
     return {'order_id': order_id}, 200
 
+@flask_app.route('/order', methods=['GET'])
+def get_order():
+    restaurant_id = flask.request.args.get('restaurant_id')
+    if restaurant_id:
+        response = requests.get('http://restaurant_order:15000/restaurant/'+restaurant_id)
+        return flask.jsonify(response.json()), response.status_code
+    order_id = flask.request.args.get('order_id')
+    if order_id:
+        response = requests.get('http://customer_order:15000/'+order_id)
+        return flask.jsonify(response.json()), response.status_code
+    return {'error': 'please input query'}, 400
+
 @flask_app.route('/order/<order_id>', methods=['PUT'])
 def put_order(order_id):
     # Authenticate token
     token = flask.request.args.get('token')
     if not token:
-        return {'error': 'token is required'}, 400
+        return {'error': 'token is required'}, 401
     user = authenticate_token(token)
     if not user:
         return {'error': 'invalid token'}, 403
@@ -169,18 +203,20 @@ def put_order(order_id):
 
     if user['group'] == 'restaurant':
         # Check if order exists in restaurant
-        response = requests.get('http://restaurant_order/'+order_id)
+        response = requests.get('http://restaurant_order:15000/order/'+order_id)
         if response.status_code == 404:
-            return {'error': 'order id not in restaurant order'}
+            return {'error': 'order id not in restaurant order'}, 404
         ########
         # check if order is your restaurant
         ########
+        if response.json()['restaurant_id'] != user['id']:
+            return {'error': 'order id is not your restaurant\'s '}, 403
 
         # Get arguments prepared 
         prepared = flask.request.args.get('prepared')
         if not prepared:
             return {'error: action is needed (i.e. prepared)'}, 400
-        prepared = string_to_boolean(prepared)
+        prepared = bool_in_str_to_zero_one(prepared)
         if prepared == None:
             return {'error: prepared should be true or false)'}, 400
 
@@ -204,46 +240,56 @@ def put_order(order_id):
         # Action to set ship
         if shipped:
             # Check if order exists in restaurant
-            response = requests.get('http://restaurant_order/'+order_id)
+            response = requests.get('http://restaurant_order:15000/order/'+order_id)
             if response.status_code == 404:
                 return {'error': 'order id not in restaurant order'}, 404
+            response_content = response.json()
+            # Check if order is prepared by the restaurant
+            if response_content['prepare'] == 0:
+                return {'error': 'order id not in restaurant order'}, 425
 
-            # Send event to restaurant
+            # Send event to restaurant to set delivery
+            customer_id = response_content['customer_id']
+            restaurant_id = response_content['customer_id']
+            
             load = json.dumps({
                 'order_id': order_id,
                 'delivery_id': user['id']
             })
             redis_conn.publish('restaurantOrder_setShipped', load)
 
-            # Send event to delivery
+            # Send event to delivery to insert row
             load = json.dumps({
                 'order_id': order_id,
-                'restaurant_id': 'restaurant_id',
-                'customer_id': 'customer_id'
+                'delivery_id': user['id'],
+                'restaurant_id': restaurant_id,
+                'customer_id': customer_id
             })
-            redis_conn.publish('deliveryOrder_addShipped', load)
-            return 204
+            redis_conn.publish('deliveryOrder_setShipped', load)
+            return '', 204
 
         # For action arrived
         if arrived:
             # Check if order exists in restaurant
-            response = requests.get('http://delivery_order/'+order_id)
+            response = requests.get('http://delivery_order:15000/'+order_id)
             if response.status_code == 404:
                 return {'error': 'order id not in delivery order'}, 404
+            arrived = bool_in_str_to_zero_one(arrived)
+            print(arrived, order_id, flush=True)
             # Send event to delivery
             load = json.dumps({
                 'order_id': order_id,
-                'arrived': arrived
+                'taken': arrived
             })
-            redis_conn.publish('deliveryOrder_setArrived', load)
+            redis_conn.publish('deliveryOrder_setTaken', load)
 
             # Send event to customer
             load = json.dumps({
                 'order_id': order_id,
-                'arrived': arrived
+                'taken': arrived
             })
-            redis_conn.publish('customerOrder_setArrived', load)
-            return 204
+            redis_conn.publish('customerOrder_setTaken', load)
+            return '', 204
         
 
 if __name__ == '__main__':
